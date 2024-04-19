@@ -6,8 +6,11 @@ import com.genymobile.scrcpy.Size;
 
 import android.os.IInterface;
 import android.view.Display;
+import android.hardware.display.VirtualDisplay;
+import android.view.Surface;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 public final class DisplayManager {
     private final IInterface manager;
@@ -49,4 +52,15 @@ public final class DisplayManager {
             throw new AssertionError(e);
         }
     }
+
+    public static VirtualDisplay createVirtualDisplay(String name, int width, int height,
+            int displayIdToMirror, Surface surface)
+        throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        java.lang.Class<?> displayManagerClass =
+            java.lang.Class.forName("android.hardware.display.DisplayManager");
+        return (VirtualDisplay) displayManagerClass.getMethod("createVirtualDisplay",
+            String.class, int.class, int.class, int.class, Surface.class)
+            .invoke(null, name, width, height, displayIdToMirror, surface);
+    }
+
 }
