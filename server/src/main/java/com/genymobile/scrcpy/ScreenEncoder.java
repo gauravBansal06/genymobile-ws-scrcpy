@@ -99,7 +99,6 @@ public class ScreenEncoder implements Connection.StreamInvalidateListener, Runna
         try {
             do {
                 MediaCodec codec = createCodec(videoSettings.getEncoderName());
-                //IBinder display = createDisplay();
                 ScreenInfo screenInfo = device.getScreenInfo();
                 Rect contentRect = screenInfo.getContentRect();
                 // include the locked video orientation
@@ -123,23 +122,19 @@ public class ScreenEncoder implements Connection.StreamInvalidateListener, Runna
                     Ln.e("Failed to createDisplay using SurfaceControl: ", surfaceControlException);
                     try {
                         Ln.i("Display: using DisplayManager API");
-                        virtualDisplay = ServiceManager.getDisplayManager()
-                                .createVirtualDisplay("scrcpy", videoRect.width(), videoRect.height(), device.getDisplayId(), surface);
+                        virtualDisplay = DisplayManager.createVirtualDisplay("scrcpy", videoRect.width(), videoRect.height(), 0, surface);
                     } catch (Exception displayManagerException) {
                        // Ln.e("Could not create display using SurfaceControl", surfaceControlException);
                         Ln.e("Could not create display using DisplayManager", displayManagerException);
                         throw new AssertionError("Could not create display");
                     }
                 }
-
-               // setDisplaySurface(display, surface, videoRotation, contentRect, unlockedVideoRect, layerStack);
                 codec.start();
                 try {
                     alive = encode(codec);
                     // do not call stop() on exception, it would trigger an IllegalStateException
                     codec.stop();
                 } finally {
-                  //  destroyDisplay(display);
                     if (display != null) {
                         destroyDisplay(display);
                         display = null;
@@ -280,7 +275,7 @@ public class ScreenEncoder implements Connection.StreamInvalidateListener, Runna
         return format;
     }
 
-    private static IBinder createDisplay() {
+    private static IBinder createDisplay() throws Exception {
         // Since Android 12 (preview), secure displays could not be created with shell permissions anymore.
         // On Android 12 preview, SDK_INT is still R (not S), but CODENAME is "S".
         boolean secure = Build.VERSION.SDK_INT < Build.VERSION_CODES.R || (Build.VERSION.SDK_INT == Build.VERSION_CODES.R && !"S"
